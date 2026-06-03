@@ -252,4 +252,19 @@
       doneCard.style.display = 'block';
       window.scrollTo({top:0, behavior:'smooth'});
     }catch(err){
-      alert('送出失敗：' + err.mes
+      alert('送出失敗：' + err.message + '\n請確認已正確設定 Apps Script 網址。');
+    }finally{
+      submitBtn.disabled = false;
+      submitBtn.textContent = "送出登錄";
+    }
+  });
+
+  document.getElementById('againBtn').addEventListener('click', function(){
+    form.reset();
+    document.querySelectorAll('.field').forEach(function(f){ f.classList.remove('invalid'); });
+    doneCard.style.display = 'none';
+    form.style.display = 'block';
+  });
+</script>
+</body>
+</html>
