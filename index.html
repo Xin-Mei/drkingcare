@@ -167,14 +167,13 @@
 
     <div class="field" data-key="name">
       <label>病人姓名<span class="req">*</span></label>
-      <input type="text" id="name" name="name" placeholder="請輸入真實姓名" autocomplete="name">
+      <input type="text" id="name" name="name" placeholder="請輸入看診真實姓名" autocomplete="name">
       <div class="err-msg">請輸入病人姓名</div>
     </div>
 
     <div class="field" data-key="phone">
       <label>聯絡電話<span class="req">*</span></label>
-      <input type="tel" id="phone" name="phone" placeholder="例：0912-345-678" autocomplete="tel" inputmode="numeric">
-      <div class="hint">行動電話或市話皆可</div>
+      <input type="tel" id="phone" name="phone" placeholder="例：0912345678" autocomplete="tel" inputmode="numeric" pattern="[0-9]*">
       <div class="err-msg">請輸入有效的聯絡電話</div>
     </div>
 
@@ -226,10 +225,13 @@
 
   form.addEventListener('submit', async function(e){
     e.preventDefault();
+    const phoneRaw = document.getElementById('phone').value;
+    const phoneDigits = phoneRaw.replace(/\D/g, '');   // 只保留數字
+    document.getElementById('phone').value = phoneDigits;
     const data = {
       branch:  document.getElementById('branch').value,
       name:    document.getElementById('name').value,
-      phone:   document.getElementById('phone').value,
+      phone:   phoneDigits,
       address: document.getElementById('address').value,
     };
     if(!validate(data)) return;
@@ -241,13 +243,11 @@
       if(!SCRIPT_URL || SCRIPT_URL.indexOf('http') !== 0){
         throw new Error('尚未設定 SCRIPT_URL');
       }
-      await fetch(SCRIPT_URL, {
-        method:'POST',
-        mode:'no-cors',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify(data)
-      });
-      // no-cors 模式無法讀回應，視為送出成功
+      // 用表單編碼送出（application/x-www-form-urlencoded），Apps Script 最容易接收
+      // 帶 action=intake：後端據此分流到「初診單寫入」，不影響原本的刪除功能
+      const body = new URLSearchParams(Object.assign({ action: 'intake' }, data));
+      await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body: body });
+      // no-cors 模式無法讀回應，fetch 完成即視為已送達
       form.style.display = 'none';
       doneCard.style.display = 'block';
       window.scrollTo({top:0, behavior:'smooth'});
